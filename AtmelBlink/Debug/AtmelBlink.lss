@@ -3,29 +3,27 @@ AtmelBlink.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .data         00000000  00800100  00800100  00000126  2**0
+  0 .data         00000000  00800100  00800100  00000100  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  1 .text         000000d2  00000000  00000000  00000054  2**1
+  1 .text         000000ac  00000000  00000000  00000054  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .comment      00000030  00000000  00000000  00000126  2**0
+  2 .comment      00000030  00000000  00000000  00000100  2**0
                   CONTENTS, READONLY
-  3 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000158  2**2
+  3 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000130  2**2
                   CONTENTS, READONLY
-  4 .debug_aranges 00000030  00000000  00000000  00000198  2**0
+  4 .debug_aranges 00000028  00000000  00000000  00000170  2**0
                   CONTENTS, READONLY, DEBUGGING
-  5 .debug_info   000007a6  00000000  00000000  000001c8  2**0
+  5 .debug_info   00000721  00000000  00000000  00000198  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_abbrev 000006be  00000000  00000000  0000096e  2**0
+  6 .debug_abbrev 0000068a  00000000  00000000  000008b9  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_line   000002e1  00000000  00000000  0000102c  2**0
+  7 .debug_line   00000266  00000000  00000000  00000f43  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_frame  00000044  00000000  00000000  00001310  2**2
+  8 .debug_frame  00000034  00000000  00000000  000011ac  2**2
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_str    0000039b  00000000  00000000  00001354  2**0
+  9 .debug_str    00000389  00000000  00000000  000011e0  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_loc    000000af  00000000  00000000  000016ef  2**0
-                  CONTENTS, READONLY, DEBUGGING
- 11 .debug_ranges 00000020  00000000  00000000  0000179e  2**0
+ 10 .debug_ranges 00000018  00000000  00000000  00001569  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -65,105 +63,55 @@ Disassembly of section .text:
   6e:	d8 e0       	ldi	r29, 0x08	; 8
   70:	de bf       	out	0x3e, r29	; 62
   72:	cd bf       	out	0x3d, r28	; 61
-  74:	0e 94 62 00 	call	0xc4	; 0xc4 <main>
-  78:	0c 94 67 00 	jmp	0xce	; 0xce <_exit>
+  74:	0e 94 44 00 	call	0x88	; 0x88 <main>
+  78:	0c 94 54 00 	jmp	0xa8	; 0xa8 <_exit>
 
 0000007c <__bad_interrupt>:
   7c:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
 
-00000080 <initPWM>:
-#include <avr/io.h>
-#include <util/delay.h>
+00000080 <init>:
 
-void initPWM() {
-	// Configura o Timer0 para Fast PWM (modo 3), saída não invertida em OC0B (PB5)
-	TCCR0A |= (1 << WGM00) | (1 << WGM01) | (1 << COM0B1);  // Fast PWM, não invertido no OC0B
-  80:	84 b5       	in	r24, 0x24	; 36
-  82:	83 62       	ori	r24, 0x23	; 35
-  84:	84 bd       	out	0x24, r24	; 36
-	TCCR0B |= (1 << CS02) | (1 << CS00);  // Prescaler = 1024
-  86:	85 b5       	in	r24, 0x25	; 37
-  88:	85 60       	ori	r24, 0x05	; 5
-  8a:	85 bd       	out	0x25, r24	; 37
+#define F_CPU 16000000UL
+#define LED_PIN PB5 // LED embutido na placa Arduino Uno
 
-	// Configura PB5 (pino digital 13) como saída
-	DDRB |= (1 << PB5);
-  8c:	84 b1       	in	r24, 0x04	; 4
-  8e:	80 62       	ori	r24, 0x20	; 32
-  90:	84 b9       	out	0x04, r24	; 4
-  92:	08 95       	ret
+void init() {
+	DDRB |= (1 << LED_PIN); // Configura o pino PB5 como saída
+  80:	84 b1       	in	r24, 0x04	; 4
+  82:	80 62       	ori	r24, 0x20	; 32
+  84:	84 b9       	out	0x04, r24	; 4
+  86:	08 95       	ret
 
-00000094 <loop>:
+00000088 <main>:
 }
 
-
-void loop() {
-	for (uint8_t dutyCycle = 0; dutyCycle < 255; dutyCycle++) {
-  94:	80 e0       	ldi	r24, 0x00	; 0
-  96:	08 c0       	rjmp	.+16     	; 0xa8 <loop+0x14>
-		OCR0B = dutyCycle; // Set duty cycle
-  98:	88 bd       	out	0x28, r24	; 40
+int main(void) {
+	init();
+  88:	0e 94 40 00 	call	0x80	; 0x80 <init>
+	while (1) {
+		PORTB ^= (1 << LED_PIN); // Alterna o estado do LED
+  8c:	95 b1       	in	r25, 0x05	; 5
+  8e:	80 e2       	ldi	r24, 0x20	; 32
+  90:	89 27       	eor	r24, r25
+  92:	85 b9       	out	0x05, r24	; 5
 	#else
 		//round up by default
 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
 	#endif
 
 	__builtin_avr_delay_cycles(__ticks_dc);
-  9a:	ef e3       	ldi	r30, 0x3F	; 63
-  9c:	fc e9       	ldi	r31, 0x9C	; 156
-  9e:	31 97       	sbiw	r30, 0x01	; 1
-  a0:	f1 f7       	brne	.-4      	; 0x9e <loop+0xa>
-  a2:	00 c0       	rjmp	.+0      	; 0xa4 <loop+0x10>
+  94:	2f e9       	ldi	r18, 0x9F	; 159
+  96:	86 e8       	ldi	r24, 0x86	; 134
+  98:	91 e0       	ldi	r25, 0x01	; 1
+  9a:	21 50       	subi	r18, 0x01	; 1
+  9c:	80 40       	sbci	r24, 0x00	; 0
+  9e:	90 40       	sbci	r25, 0x00	; 0
+  a0:	e1 f7       	brne	.-8      	; 0x9a <main+0x12>
+  a2:	00 c0       	rjmp	.+0      	; 0xa4 <main+0x1c>
   a4:	00 00       	nop
-	DDRB |= (1 << PB5);
-}
+  a6:	f2 cf       	rjmp	.-28     	; 0x8c <main+0x4>
 
+000000a8 <_exit>:
+  a8:	f8 94       	cli
 
-void loop() {
-	for (uint8_t dutyCycle = 0; dutyCycle < 255; dutyCycle++) {
-  a6:	8f 5f       	subi	r24, 0xFF	; 255
-  a8:	8f 3f       	cpi	r24, 0xFF	; 255
-  aa:	b1 f7       	brne	.-20     	; 0x98 <loop+0x4>
-  ac:	08 c0       	rjmp	.+16     	; 0xbe <loop+0x2a>
-		OCR0B = dutyCycle; // Set duty cycle
-		_delay_ms(10); // Delay for visibility
-	}
-	for (uint8_t dutyCycle = 255; dutyCycle > 0; dutyCycle--) {
-		OCR0B = dutyCycle; // Set duty cycle
-  ae:	88 bd       	out	0x28, r24	; 40
-  b0:	ef e3       	ldi	r30, 0x3F	; 63
-  b2:	fc e9       	ldi	r31, 0x9C	; 156
-  b4:	31 97       	sbiw	r30, 0x01	; 1
-  b6:	f1 f7       	brne	.-4      	; 0xb4 <loop+0x20>
-  b8:	00 c0       	rjmp	.+0      	; 0xba <loop+0x26>
-  ba:	00 00       	nop
-void loop() {
-	for (uint8_t dutyCycle = 0; dutyCycle < 255; dutyCycle++) {
-		OCR0B = dutyCycle; // Set duty cycle
-		_delay_ms(10); // Delay for visibility
-	}
-	for (uint8_t dutyCycle = 255; dutyCycle > 0; dutyCycle--) {
-  bc:	81 50       	subi	r24, 0x01	; 1
-  be:	81 11       	cpse	r24, r1
-  c0:	f6 cf       	rjmp	.-20     	; 0xae <loop+0x1a>
-		OCR0B = dutyCycle; // Set duty cycle
-		_delay_ms(10); // Delay for visibility
-	}
-}
-  c2:	08 95       	ret
-
-000000c4 <main>:
-
-int main() {
-	initPWM();
-  c4:	0e 94 40 00 	call	0x80	; 0x80 <initPWM>
-	while (1) {
-		loop();
-  c8:	0e 94 4a 00 	call	0x94	; 0x94 <loop>
-  cc:	fd cf       	rjmp	.-6      	; 0xc8 <main+0x4>
-
-000000ce <_exit>:
-  ce:	f8 94       	cli
-
-000000d0 <__stop_program>:
-  d0:	ff cf       	rjmp	.-2      	; 0xd0 <__stop_program>
+000000aa <__stop_program>:
+  aa:	ff cf       	rjmp	.-2      	; 0xaa <__stop_program>
